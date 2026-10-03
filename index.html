@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>出國行李清點</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: single narrow column like a luggage tag — header with progress, then category blocks of tappable rows */
+:root{
+  --bg:#ECEFF2; --paper:#FFFFFF; --ink:#1B2733; --muted:#5E6B78; --line:#D5DCE3;
+  --accent:#1F5C7A; --done:#2E7D5B; --done-soft:#E3F1EA; --warn:#B4492F;
+  --display:"Noto Serif TC","Songti TC",serif;
+  --body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12181E; --paper:#1A222A; --ink:#E6ECF1; --muted:#93A1AE; --line:#2C3843;
+  --accent:#7DB8D6; --done:#6FCB9C; --done-soft:#1C3329; --warn:#E58A70; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12181E; --paper:#1A222A; --ink:#E6ECF1; --muted:#93A1AE; --line:#2C3843;
+  --accent:#7DB8D6; --done:#6FCB9C; --done-soft:#1C3329; --warn:#E58A70; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:24px 48px;display:grid;gap:20px}
+header{display:grid;gap:10px}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:500}
+h1{font-family:var(--display);font-size:28px;margin:0;text-wrap:balance}
+.progress{display:flex;align-items:center;gap:12px}
+.bar{flex:1;height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--done);transition:width .25s}
+.count{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:14px;color:var(--muted);min-width:4.5em;text-align:right}
+.status{font-size:14px;color:var(--muted)}
+.status.ok{color:var(--done);font-weight:700}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:6px 14px;border-radius:6px;cursor:pointer}
+button:focus-visible,.item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.danger{color:var(--warn);border-color:var(--warn)}
+section{background:var(--paper);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;padding:12px 16px;border-bottom:1px solid var(--line);gap:8px}
+h2{font-family:var(--display);font-size:18px;margin:0}
+.sec-head .count{min-width:0}
+section.complete .sec-head .count{color:var(--done);font-weight:700}
+ul{list-style:none;margin:0;padding:0}
+.item{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;border-top:1px solid var(--line);user-select:none}
+li:first-child .item{border-top:0}
+.box{flex:none;width:22px;height:22px;border:2px solid var(--muted);border-radius:5px;display:grid;place-items:center;transition:background .15s,border-color .15s}
+.box svg{width:14px;height:14px;opacity:0}
+.item[aria-checked="true"]{background:var(--done-soft)}
+.item[aria-checked="true"] .box{background:var(--done);border-color:var(--done)}
+.item[aria-checked="true"] .box svg{opacity:1}
+.item[aria-checked="true"] .label{color:var(--muted);text-decoration:line-through}
+.label{min-width:0}
+.confirm{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px}
+footer{font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">出差必需品・出發前清點</div>
+    <h1>出國行李清點</h1>
+    <div class="progress">
+      <div class="bar"><i id="bar"></i></div>
+      <span class="count" id="total">0 / 42</span>
+    </div>
+    <div class="status" id="status">點一下品項即可打勾</div>
+    <div class="actions" id="actions">
+      <button id="resetBtn" type="button">重設，準備下一趟</button>
+    </div>
+  </header>
+  <main id="list"></main>
+  <footer>勾選紀錄只存在這台裝置的瀏覽器裡，換手機或清除瀏覽資料會歸零。</footer>
+</div>
+
+<script>
+const DATA=[
+  {k:"teeth",t:"牙齒清潔",items:["隱適美牙套","狗狗棒","清潔用牙刷","歐樂B電動牙刷","牙膏","牙線","牙縫刷"]},
+  {k:"face",t:"臉部清潔與保養",items:["洗臉酵素","洗臉巾","棉花棒","面膜","理膚寶水 B5","CeraVe 防曬"]},
+  {k:"groom",t:"修容與眉眼",items:["刮鬍刀","鼻毛剪","眉毛夾","指甲刀","眉筆組","雙眼皮貼"]},
+  {k:"body",t:"身體護理",items:["QV 身體乳液","體香膏","濕廁紙"]},
+  {k:"meds",t:"藥品與每日保健品",items:["濕疹藥膏","眼藥水","降血脂藥","安立壓","乳糖不耐症酵素","速泰消消化錠","每日益生菌","每日蔬菜汁","每日 Creatine","魚油","Multivitamins","肝臟水解物 GX","Melatonin 3mg"]},
+  {k:"bath",t:"洗浴與清潔",items:["沐浴乳","潤髮乳","3M 消毒清潔液","洗手液","髮膠"]},
+  {k:"other",t:"其他",items:["針線包","濕度偵測器"]}
+];
+const KEY="packing-checks-v1";
+let state={};
+try{state=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){state={}}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
+const TOTAL=DATA.reduce((n,s)=>n+s.items.length,0);
+const tick='<svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.2 3L13 4.5" stroke="var(--paper)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const list=document.getElementById("list");
+list.style.display="grid";list.style.gap="14px";
+
+DATA.forEach(s=>{
+  const sec=document.createElement("section");sec.id="sec-"+s.k;
+  sec.innerHTML=`<div class="sec-head"><h2>${s.t}</h2><span class="count"></span></div><ul></ul>`;
+  const ul=sec.querySelector("ul");
+  s.items.forEach((name,i)=>{
+    const id=s.k+"-"+i;
+    const li=document.createElement("li");
+    li.innerHTML=`<div class="item" role="checkbox" tabindex="0" id="${id}" aria-checked="${!!state[id]}"><span class="box">${tick}</span><span class="label">${name}</span></div>`;
+    const el=li.firstElementChild;
+    const toggle=()=>{state[id]=!state[id];if(!state[id])delete state[id];el.setAttribute("aria-checked",!!state[id]);save();update()};
+    el.addEventListener("click",toggle);
+    el.addEventListener("keydown",e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();toggle()}});
+    ul.appendChild(li);
+  });
+  list.appendChild(sec);
+});
+
+function update(){
+  let done=0;
+  DATA.forEach(s=>{
+    const n=s.items.filter((_,i)=>state[s.k+"-"+i]).length;done+=n;
+    const sec=document.getElementById("sec-"+s.k);
+    sec.querySelector(".count").textContent=n===s.items.length?"✓ 全數到齊":`${n} / ${s.items.length}`;
+    sec.classList.toggle("complete",n===s.items.length);
+  });
+  document.getElementById("total").textContent=`${done} / ${TOTAL}`;
+  document.getElementById("bar").style.width=(done/TOTAL*100)+"%";
+  const st=document.getElementById("status");
+  st.textContent=done===TOTAL?"全部帶齊，可以出發了":done===0?"點一下品項即可打勾":`還差 ${TOTAL-done} 樣`;
+  st.classList.toggle("ok",done===TOTAL);
+}
+
+const actions=document.getElementById("actions");
+function showReset(){
+  actions.innerHTML='<button id="resetBtn" type="button">重設，準備下一趟</button>';
+  document.getElementById("resetBtn").onclick=showConfirm;
+}
+function showConfirm(){
+  actions.innerHTML='<div class="confirm">確定清除所有勾選？<button id="yesBtn" type="button" class="danger">清除</button><button id="noBtn" type="button">取消</button></div>';
+  document.getElementById("yesBtn").onclick=()=>{state={};save();document.querySelectorAll(".item").forEach(el=>el.setAttribute("aria-checked","false"));update();showReset()};
+  document.getElementById("noBtn").onclick=showReset;
+}
+showReset();update();
+</script>
+</body>
+</html>
