@@ -61,11 +61,11 @@ footer{font-size:13px;color:var(--muted)}
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">出差必需品・出發前清點</div>
+    <div class="eyebrow">出國必帶・出發前清點</div>
     <h1>出國行李清點</h1>
     <div class="progress">
       <div class="bar"><i id="bar"></i></div>
-      <span class="count" id="total">0 / 42</span>
+      <span class="count" id="total">0 / 84</span>
     </div>
     <div class="status" id="status">點一下品項即可打勾</div>
     <div class="actions" id="actions">
@@ -78,17 +78,26 @@ footer{font-size:13px;color:var(--muted)}
 
 <script>
 const DATA=[
-  {k:"teeth",t:"牙齒清潔",items:["隱適美牙套","狗狗棒","清潔用牙刷","歐樂B電動牙刷","牙膏","牙線","牙縫刷"]},
+  {k:"docs",t:"證件與出發準備",items:["護照","手機網路","旅遊保險","簽證","機場接送"]},
+  {k:"teeth",t:"牙齒清潔",items:["隱適美牙套","隱適美牙套盒","狗狗棒","清潔用牙刷","歐樂B電動牙刷","牙膏","牙線","牙間刷"]},
   {k:"face",t:"臉部清潔與保養",items:["洗臉酵素","洗臉巾","棉花棒","面膜","理膚寶水 B5","CeraVe 防曬"]},
   {k:"groom",t:"修容與眉眼",items:["刮鬍刀","鼻毛剪","眉毛夾","指甲刀","眉筆組","雙眼皮貼"]},
   {k:"body",t:"身體護理",items:["QV 身體乳液","體香膏","濕廁紙"]},
   {k:"meds",t:"藥品與每日保健品",items:["濕疹藥膏","眼藥水","降血脂藥","安立壓","乳糖不耐症酵素","速泰消消化錠","每日益生菌","每日蔬菜汁","每日 Creatine","魚油","Multivitamins","肝臟水解物 GX","Melatonin 3mg"]},
   {k:"bath",t:"洗浴與清潔",items:["沐浴乳","潤髮乳","3M 消毒清潔液","洗手液","髮膠"]},
+  {k:"top",t:"上身",items:["短袖","長袖","襯衫","發熱衣","毛衣","帽踢","睡衣","運動服","外套"]},
+  {k:"bottom",t:"下身",items:["內褲","長褲","短褲"]},
+  {k:"socks",t:"襪子",items:["長襪","短襪"]},
+  {k:"shoes",t:"鞋子",items:["球鞋","皮鞋","拖鞋"]},
+  {k:"acc",t:"配件",items:["口袋巾","領帶","蝴蝶結","皮帶","帽子","隨身包包","購物袋"]},
+  {k:"sleep",t:"睡眠用品",items:["枕頭","枕頭套","眼罩","耳塞","氣喘藥"]},
+  {k:"elec",t:"電子產品",items:["充電器","轉接頭","加濕器","音響","太陽眼鏡","行動電源","GR3 / DJI"]},
   {k:"other",t:"其他",items:["針線包","濕度偵測器"]}
 ];
 const KEY="packing-checks-v1";
 let state={};
 try{state=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){state={}}
+if(!state._v2){Object.keys(state).forEach(k=>{if(k.startsWith("teeth-"))delete state[k]});state._v2=1;try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
 const TOTAL=DATA.reduce((n,s)=>n+s.items.length,0);
 const tick='<svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.2 3L13 4.5" stroke="var(--paper)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -134,7 +143,7 @@ function showReset(){
 }
 function showConfirm(){
   actions.innerHTML='<div class="confirm">確定清除所有勾選？<button id="yesBtn" type="button" class="danger">清除</button><button id="noBtn" type="button">取消</button></div>';
-  document.getElementById("yesBtn").onclick=()=>{state={};save();document.querySelectorAll(".item").forEach(el=>el.setAttribute("aria-checked","false"));update();showReset()};
+  document.getElementById("yesBtn").onclick=()=>{state={_v2:1};save();document.querySelectorAll(".item").forEach(el=>el.setAttribute("aria-checked","false"));update();showReset()};
   document.getElementById("noBtn").onclick=showReset;
 }
 showReset();update();
